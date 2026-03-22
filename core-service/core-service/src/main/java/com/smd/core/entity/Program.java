@@ -5,6 +5,7 @@ import lombok.*;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "program")
@@ -25,7 +26,7 @@ public class Program {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id", nullable = false)
     @ToString.Exclude
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)  // ✅ Cho phép ghi (deserialize) nhưng không đọc (serialize)
     private Department department;
 
     // Relationships

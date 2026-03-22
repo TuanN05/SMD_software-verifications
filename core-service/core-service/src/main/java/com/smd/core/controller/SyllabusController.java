@@ -2,9 +2,11 @@ package com.smd.core.controller;
 
 import com.smd.core.document.SyllabusDocument;
 import com.smd.core.dto.*;
-import com.smd.core.entity.Syllabus;
-import com.smd.core.entity.SyllabusAuditLog;
-import com.smd.core.entity.SyllabusWorkflowHistory;
+import com.smd.core.entity.*;
+import com.smd.core.exception.ResourceNotFoundException;
+import com.smd.core.repository.CourseRepository;
+import com.smd.core.repository.ProgramRepository;
+import com.smd.core.repository.UserRepository;
 import com.smd.core.service.AuditLogService;
 import com.smd.core.service.SyllabusService;
 import com.smd.core.service.WorkflowService;
@@ -42,6 +44,15 @@ public class SyllabusController {
     
     @Autowired
     private AuditLogService auditLogService;
+    
+    @Autowired
+    private CourseRepository courseRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private ProgramRepository programRepository;
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Syllabus syllabus) {
@@ -237,12 +248,30 @@ public class SyllabusController {
     public ResponseEntity<SyllabusResponse> createWithDto(
             @Valid @RequestBody CreateSyllabusRequest request) {
         
-        // Convert DTO to Entity (simplified - in production would use proper mapping service)
+        // Convert DTO to Entity
         Syllabus syllabus = new Syllabus();
-        // Note: Would need to fetch Course, User, Program from repositories
-        // This is simplified for demonstration
+        
+        // Fetch Course entity by ID
+        Course course = courseRepository.findById(request.getCourseId())
+            .orElseThrow(() -> new ResourceNotFoundException("Course not found with ID: " + request.getCourseId()));
+        syllabus.setCourse(course);
+        
+        // Fetch Lecturer (User) entity by ID
+        User lecturer = userRepository.findById(request.getLecturerId())
+            .orElseThrow(() -> new ResourceNotFoundException("Lecturer not found with ID: " + request.getLecturerId()));
+        syllabus.setLecturer(lecturer);
+        
+        // Set academic year and other basic fields
         syllabus.setAcademicYear(request.getAcademicYear());
         syllabus.setVersionNotes(request.getVersionNotes());
+        syllabus.setDescription(request.getDescription());
+        
+        // Fetch and set Program if programId is provided
+        if (request.getProgramId() != null) {
+            Program program = programRepository.findById(request.getProgramId())
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found with ID: " + request.getProgramId()));
+            syllabus.setProgram(program);
+        }
         
         Syllabus created = syllabusService.createSyllabus(syllabus);
         SyllabusResponse response = SyllabusResponse.fromEntity(created);
