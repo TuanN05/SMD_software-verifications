@@ -97,6 +97,25 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Xử lý ValidationException - HTTP 400 Bad Request
+     */
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(
+            ValidationException ex,
+            HttpServletRequest request) {
+        
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Xử lý UnauthorizedException - HTTP 403 Forbidden
      */
     @ExceptionHandler(UnauthorizedException.class)

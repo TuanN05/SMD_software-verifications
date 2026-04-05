@@ -14,12 +14,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/course-relations")
+@RequestMapping("/api/course-relations")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Course Relationship", description = "APIs for managing course relationships (Prerequisites, Corequisites, Equivalents)")
@@ -37,13 +39,13 @@ public class CourseRelationController {
         @ApiResponse(responseCode = "404", description = "Course not found")
     })
     public ResponseEntity<CourseRelationshipDto> createRelationship(
-            @RequestBody CourseRelationshipDto dto) {
+            @jakarta.validation.Valid @RequestBody CourseRelationshipDto dto) {
         log.info("REST request to create course relationship");
         CourseRelationshipDto result = relationService.createRelationship(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
     
-    @GetMapping("/course/{courseId}")
+    @GetMapping("/{courseId}")
     @Operation(summary = "Get all relationships of a course",
                description = "Returns the list of related courses")
     @ApiResponses({
@@ -58,7 +60,7 @@ public class CourseRelationController {
         return ResponseEntity.ok(relationships);
     }
     
-    @GetMapping("/tree/{courseId}")
+    @GetMapping("/{courseId}/dependency-tree")
     @Operation(summary = "Get course dependency tree",
                description = "Returns the complete tree structure including prerequisites, corequisites and equivalents")
     @ApiResponses({
@@ -118,7 +120,7 @@ public class CourseRelationController {
         return ResponseEntity.ok(stats);
     }
     
-    @DeleteMapping("/{relationId}")
+    @DeleteMapping("/{relationshipId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT')")
     @Operation(summary = "Delete a course relationship",
                description = "Remove the relationship between two courses")
@@ -128,9 +130,29 @@ public class CourseRelationController {
     })
     public ResponseEntity<Void> deleteRelationship(
             @Parameter(description = "Relationship ID")
-            @PathVariable Long relationId) {
-        log.info("REST request to delete relationship: {}", relationId);
-        relationService.deleteRelationship(relationId);
+            @PathVariable Long relationshipId) {
+        log.info("REST request to delete course relationship: {}", relationshipId);
+        relationService.deleteRelationship(relationshipId);
         return ResponseEntity.noContent().build();
+    }
+    
+    // ===== EXCEPTION HANDLERS =====
+    
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        String paramName = e.getName();
+        String invalidValue = e.getValue() != null ? e.getValue().toString() : "null";
+        String requiredType = e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "Unknown";
+        
+        log.warn("Invalid parameter type: {} = {} (expected {})", paramName, invalidValue, requiredType);
+        
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("timestamp", java.time.LocalDateTime.now());
+        errorResponse.put("status", 400);
+        errorResponse.put("error", "Bad Request");
+        errorResponse.put("message", paramName + " must be a valid " + requiredType);
+        errorResponse.put("invalidValue", invalidValue);
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 }

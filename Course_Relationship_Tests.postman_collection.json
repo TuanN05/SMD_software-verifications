@@ -1,0 +1,1159 @@
+{
+  "info": {
+    "_postman_id": "course-relationships-collection",
+    "name": "Course Relationship Management Tests",
+    "description": "Collection of API tests for Course Relationship Management Functions (38-44)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Function 38 - Create Course Relationship",
+      "item": [
+        {
+          "name": "ITC_38.1 - Create valid course relationship",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 Created\", function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains relationshipId\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('relationshipId');",
+                  "    pm.expect(jsonData).to.have.property('courseId', 101);",
+                  "    pm.expect(jsonData).to.have.property('relatedCourseId', 102);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 101,\n  \"relatedCourseId\": 102,\n  \"relationType\": \"PREREQUISITE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships"]
+            },
+            "description": "Test creating a new course relationship with valid data"
+          }
+        },
+        {
+          "name": "ITC_38.2 - Unauthorized user cannot create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 403 Forbidden\", function() {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{lecturerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 101,\n  \"relatedCourseId\": 102,\n  \"relationType\": \"PREREQUISITE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships"]
+            },
+            "description": "Test that lecturer cannot create relationship (should get 403)"
+          }
+        },
+        {
+          "name": "ITC_38.3 - Invalid related course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 404 Not Found\", function() {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 101,\n  \"relatedCourseId\": 9999,\n  \"relationType\": \"PREREQUISITE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships"]
+            },
+            "description": "Test with non-existent related course (should get 404)"
+          }
+        },
+        {
+          "name": "BVA_38.1 - courseId = 1 (minimum valid)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 Created\", function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 1,\n  \"relatedCourseId\": 2,\n  \"relationType\": \"PREREQUISITE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships"]
+            },
+            "description": "Test with minimum valid courseId = 1"
+          }
+        },
+        {
+          "name": "BVA_38.2 - courseId = 0 (invalid boundary)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 0,\n  \"relatedCourseId\": 2,\n  \"relationType\": \"PREREQUISITE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships"]
+            },
+            "description": "Test with invalid courseId = 0"
+          }
+        },
+        {
+          "name": "BVA_38.5 - Self-reference (courseId = relatedCourseId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 101,\n  \"relatedCourseId\": 101,\n  \"relationType\": \"PREREQUISITE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships"]
+            },
+            "description": "Test self-reference should be rejected"
+          }
+        },
+        {
+          "name": "BVA_38.6 - relationType null",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 101,\n  \"relatedCourseId\": 102,\n  \"relationType\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships"]
+            },
+            "description": "Test with null relationType should be rejected"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Function 39 - Delete Course Relationship",
+      "item": [
+        {
+          "name": "ITC_39.1 - Delete existing relationship",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 204 No Content or 200 OK\", function() {",
+                  "    pm.expect([200, 204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships", "1"]
+            },
+            "description": "Test deleting an existing relationship"
+          }
+        },
+        {
+          "name": "ITC_39.2 - Delete non-existent relationship",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 404 Not Found\", function() {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships/9999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships", "9999"]
+            },
+            "description": "Test deleting non-existent relationship (should get 404)"
+          }
+        },
+        {
+          "name": "ITC_39.3 - Unauthorized delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 403 Forbidden\", function() {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{lecturerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships", "1"]
+            },
+            "description": "Test that lecturer cannot delete (should get 403)"
+          }
+        },
+        {
+          "name": "BVA_39.2 - relationshipId = 0 (invalid)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships/0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships", "0"]
+            },
+            "description": "Test delete with invalid relationshipId = 0"
+          }
+        },
+        {
+          "name": "BVA_39.5 - relationshipId not a number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships/abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships", "abc"]
+            },
+            "description": "Test delete with non-numeric relationshipId"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Function 40 - Get Course Dependency Tree",
+      "item": [
+        {
+          "name": "ITC_40.1 - Get dependency tree with prerequisites",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains tree structure\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('courseId');",
+                  "    pm.expect(jsonData).to.have.property('prerequisites');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/101/dependency-tree",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "101", "dependency-tree"]
+            },
+            "description": "Test getting dependency tree for a course with prerequisites"
+          }
+        },
+        {
+          "name": "ITC_40.2 - Get dependency tree without prerequisites",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains only root course or empty prerequisites\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('courseId', 101);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/105/dependency-tree",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "105", "dependency-tree"]
+            },
+            "description": "Test getting dependency tree for course with no prerequisites"
+          }
+        },
+        {
+          "name": "BVA_40.5 - courseId = 0 (invalid)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/0/dependency-tree",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "0", "dependency-tree"]
+            },
+            "description": "Test get dependency tree with invalid courseId = 0"
+          }
+        },
+        {
+          "name": "BVA_40.6 - courseId does not exist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 404 Not Found\", function() {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/99999/dependency-tree",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "99999", "dependency-tree"]
+            },
+            "description": "Test get dependency tree for non-existent course"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Function 41 - Get All Relationships of a Course",
+      "item": [
+        {
+          "name": "ITC_41.1 - Get all relationships",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/101/relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "101", "relationships"]
+            },
+            "description": "Test getting all relationships for a course"
+          }
+        },
+        {
+          "name": "ITC_41.2 - Get relationships for independent course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is empty array\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array').that.is.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/105/relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "105", "relationships"]
+            },
+            "description": "Test getting relationships for independent course (should return empty array)"
+          }
+        },
+        {
+          "name": "ITC_41.3 - Get relationships with filter by type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All relationships are PREREQUISITE type\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    jsonData.forEach(function(rel) {",
+                  "        pm.expect(rel.relationType).to.equal('PREREQUISITE');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/101/relationships?type=PREREQUISITE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "101", "relationships"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "PREREQUISITE"
+                }
+              ]
+            },
+            "description": "Test getting relationships filtered by type=PREREQUISITE"
+          }
+        },
+        {
+          "name": "BVA_41.6 - courseId does not exist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 404 Not Found\", function() {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/99999/relationships",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "99999", "relationships"]
+            },
+            "description": "Test getting relationships for non-existent course"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Function 42 - Get Available Prerequisites",
+      "item": [
+        {
+          "name": "ITC_42.1 - Get available prerequisites",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/101/available-prerequisites",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "101", "available-prerequisites"]
+            },
+            "description": "Test getting available prerequisites for a course"
+          }
+        },
+        {
+          "name": "ITC_42.2 - Get empty available prerequisites",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is empty or limited array\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/201/available-prerequisites",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "201", "available-prerequisites"]
+            },
+            "description": "Test getting available prerequisites for highly connected course"
+          }
+        },
+        {
+          "name": "BVA_42.4 - courseId = 0 (invalid)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/0/available-prerequisites",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses", "0", "available-prerequisites"]
+            },
+            "description": "Test get available prerequisites with invalid courseId = 0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Function 43 - Check Circular Dependency",
+      "item": [
+        {
+          "name": "ITC_43.1 - No circular dependency",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains wouldCreateCircular = false\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('wouldCreateCircular', false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 101,\n  \"relatedCourseId\": 102\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships/check-circular",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships", "check-circular"]
+            },
+            "description": "Test checking relationship that won't create circular dependency"
+          }
+        },
+        {
+          "name": "ITC_43.2 - Would create circular dependency",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains wouldCreateCircular = true\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('wouldCreateCircular', true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 103,\n  \"relatedCourseId\": 101\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships/check-circular",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships", "check-circular"]
+            },
+            "description": "Test checking relationship that would create circular dependency"
+          }
+        },
+        {
+          "name": "ITC_43.3 - Self-reference",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 or 400\", function() {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 101,\n  \"relatedCourseId\": 101\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships/check-circular",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships", "check-circular"]
+            },
+            "description": "Test self-reference (course relating to itself)"
+          }
+        },
+        {
+          "name": "BVA_43.5 - courseId = 0 (invalid)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 0,\n  \"relatedCourseId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/course-relationships/check-circular",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "course-relationships", "check-circular"]
+            },
+            "description": "Test check circular with invalid courseId = 0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Function 44 - Get Department Statistics",
+      "item": [
+        {
+          "name": "ITC_44.1 - Get statistics for department with relationships",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains statistics\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('totalCourses');",
+                  "    pm.expect(jsonData).to.have.property('totalRelationships');",
+                  "    pm.expect(jsonData).to.have.property('averagePrerequisitesPerCourse');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/departments/1/relationship-statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments", "1", "relationship-statistics"]
+            },
+            "description": "Test getting relationship statistics for a department"
+          }
+        },
+        {
+          "name": "ITC_44.2 - Get statistics for new empty department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response shows zero values\", function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.totalRelationships).to.equal(0);",
+                  "    pm.expect(jsonData.averagePrerequisitesPerCourse).to.equal(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/departments/999/relationship-statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments", "999", "relationship-statistics"]
+            },
+            "description": "Test getting statistics for empty/new department"
+          }
+        },
+        {
+          "name": "ITC_44.3 - Permission check for different department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 403 or 200\", function() {",
+                  "    pm.expect([200, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hodToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/departments/2/relationship-statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments", "2", "relationship-statistics"]
+            },
+            "description": "Test permission check when HOD accesses different department"
+          }
+        },
+        {
+          "name": "BVA_44.5 - deptId = 0 (invalid)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/departments/0/relationship-statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments", "0", "relationship-statistics"]
+            },
+            "description": "Test get statistics with invalid deptId = 0"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_ADMIN_TOKEN_HERE",
+      "type": "string"
+    },
+    {
+      "key": "lecturerToken",
+      "value": "YOUR_LECTURER_TOKEN_HERE",
+      "type": "string"
+    },
+    {
+      "key": "hodToken",
+      "value": "YOUR_HOD_TOKEN_HERE",
+      "type": "string"
+    }
+  ]
+}
