@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smd.core.entity.Syllabus;
 import com.smd.core.entity.SyllabusAuditLog;
 import com.smd.core.entity.User;
+import com.smd.core.exception.ResourceNotFoundException;
 import com.smd.core.repository.SyllabusAuditLogRepository;
+import com.smd.core.repository.SyllabusRepository;
 import com.smd.core.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,9 @@ public class AuditLogService {
     
     @Autowired
     private SyllabusAuditLogRepository auditLogRepository;
+    
+    @Autowired
+    private SyllabusRepository syllabusRepository;
     
     @Autowired
     private UserRepository userRepository;
@@ -138,6 +143,9 @@ public class AuditLogService {
      * Get all audit logs for a specific syllabus
      */
     public List<SyllabusAuditLog> getAuditLogsBySyllabus(Long syllabusId) {
+        // Verify syllabus exists
+        syllabusRepository.findById(syllabusId)
+                .orElseThrow(() -> new ResourceNotFoundException("Syllabus", "syllabusId", syllabusId));
         return auditLogRepository.findBySyllabus_SyllabusIdOrderByTimestampDesc(syllabusId);
     }
     
@@ -152,6 +160,9 @@ public class AuditLogService {
      * Get workflow history for a syllabus (submit, approve, reject actions)
      */
     public List<SyllabusAuditLog> getWorkflowHistory(Long syllabusId) {
+        // Verify syllabus exists
+        syllabusRepository.findById(syllabusId)
+                .orElseThrow(() -> new ResourceNotFoundException("Syllabus", "syllabusId", syllabusId));
         return auditLogRepository.findWorkflowHistory(syllabusId);
     }
     

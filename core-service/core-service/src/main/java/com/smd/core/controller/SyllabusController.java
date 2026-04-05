@@ -715,20 +715,30 @@ public class SyllabusController {
         @ApiResponse(responseCode = "400", description = "Invalid date format"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<List<AuditLogResponse>> getAuditLogsByDateRange(
+    public ResponseEntity<?> getAuditLogsByDateRange(
             @Parameter(description = "Start date (ISO format: yyyy-MM-dd'T'HH:mm:ss)", required = true)
             @RequestParam String startDate,
             @Parameter(description = "End date (ISO format: yyyy-MM-dd'T'HH:mm:ss)", required = true)
             @RequestParam String endDate) {
         
-        java.time.LocalDateTime start = java.time.LocalDateTime.parse(startDate);
-        java.time.LocalDateTime end = java.time.LocalDateTime.parse(endDate);
-        
-        List<SyllabusAuditLog> logs = auditLogService.getAuditLogsByDateRange(start, end);
-        List<AuditLogResponse> response = logs.stream()
-                .map(AuditLogResponse::fromEntity)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(response);
+        try {
+            java.time.LocalDateTime start = java.time.LocalDateTime.parse(startDate);
+            java.time.LocalDateTime end = java.time.LocalDateTime.parse(endDate);
+            
+            List<SyllabusAuditLog> logs = auditLogService.getAuditLogsByDateRange(start, end);
+            List<AuditLogResponse> response = logs.stream()
+                    .map(AuditLogResponse::fromEntity)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(response);
+        } catch (java.time.format.DateTimeParseException e) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    400,
+                    "Bad Request",
+                    "Invalid date format. Expected format: yyyy-MM-dd'T'HH:mm:ss (e.g., 2026-03-01T00:00:00)",
+                    "/api/syllabuses/audit-logs/date-range"
+            );
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 }
 

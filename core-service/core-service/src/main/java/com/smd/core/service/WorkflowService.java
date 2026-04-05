@@ -399,6 +399,7 @@ public class WorkflowService {
      */
     @Transactional(readOnly = true)
     public List<SyllabusWorkflowHistory> getWorkflowHistory(Long syllabusId) {
+        Syllabus syllabus = getSyllabusOrThrow(syllabusId);
         return workflowHistoryRepository.findBySyllabus_SyllabusIdOrderByActionTimeDesc(syllabusId);
     }
     
