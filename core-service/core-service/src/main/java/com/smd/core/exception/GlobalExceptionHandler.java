@@ -116,6 +116,30 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Xử lý IllegalArgumentException (invalid enum values) - HTTP 400 Bad Request
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
+        
+        String message = "Invalid material type";
+        if (ex.getMessage() != null && ex.getMessage().contains("enumType")) {
+            message = "Invalid material type";
+        }
+        
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(message)
+                .path(request.getRequestURI())
+                .build();
+        
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Xử lý UnauthorizedException - HTTP 403 Forbidden
      */
     @ExceptionHandler(UnauthorizedException.class)
