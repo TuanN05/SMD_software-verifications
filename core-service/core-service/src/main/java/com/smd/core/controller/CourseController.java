@@ -1,9 +1,11 @@
 package com.smd.core.controller;
 
 import com.smd.core.dto.CourseResponse;
+import com.smd.core.dto.CourseRequest;
 import com.smd.core.dto.DepartmentSimpleDto;
 import com.smd.core.entity.Course;
 import com.smd.core.service.CourseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,14 +43,14 @@ public class CourseController {
     }
 
     @PostMapping
-    public ResponseEntity<CourseResponse> createCourse(@RequestBody Course course) {
-        Course created = courseService.createCourse(course);
+    public ResponseEntity<CourseResponse> createCourse(@Valid @RequestBody CourseRequest request) {
+        Course created = courseService.createCourse(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToDto(created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CourseResponse> updateCourse(@PathVariable Long id, @RequestBody Course course) {
-        Course updated = courseService.updateCourse(id, course);
+    public ResponseEntity<CourseResponse> updateCourse(@PathVariable Long id, @Valid @RequestBody CourseRequest request) {
+        Course updated = courseService.updateCourse(id, request);
         return ResponseEntity.ok(convertToDto(updated));
     }
 

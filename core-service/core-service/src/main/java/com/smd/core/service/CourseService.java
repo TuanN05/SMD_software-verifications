@@ -10,8 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.smd.core.dto.CourseRelationResponse;
 import com.smd.core.dto.CourseResponse;
+import com.smd.core.dto.CourseRequest;
 import com.smd.core.dto.DepartmentSimpleDto;
 import com.smd.core.entity.CourseRelation;
+import com.smd.core.entity.Department;
 import java.util.stream.Collectors;
 
 import java.util.List;
@@ -40,38 +42,51 @@ public class CourseService {
     }
 
     @Transactional
-    public Course createCourse(Course course) {
-        if (courseRepository.existsByCourseCode(course.getCourseCode())) {
-            throw new DuplicateResourceException("Course already exists with code: " + course.getCourseCode());
+    public Course createCourse(CourseRequest request) {
+        if (courseRepository.existsByCourseCode(request.getCourseCode())) {
+            throw new DuplicateResourceException("Course already exists with code: " + request.getCourseCode());
         }
         
-        if (course.getDepartment() != null && course.getDepartment().getDepartmentId() != null) {
-            departmentRepository.findById(course.getDepartment().getDepartmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Department not found"));
-        }
+        // Validate and fetch department
+        Department department = departmentRepository.findById(request.getDepartment().getDepartmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + request.getDepartment().getDepartmentId()));
+        
+        // Create course from request
+        Course course = Course.builder()
+                .courseCode(request.getCourseCode())
+                .courseName(request.getCourseName())
+                .credits(request.getCredits())
+                .courseType(request.getCourseType() != null ? 
+                    Course.CourseType.valueOf(request.getCourseType()) : 
+                    Course.CourseType.BAT_BUOC)
+                .department(department)
+                .build();
         
         return courseRepository.save(course);
     }
 
     @Transactional
-    public Course updateCourse(Long id, Course courseDetails) {
+    public Course updateCourse(Long id, CourseRequest request) {
         Course course = getCourseById(id);
         
         // Check if course code is being changed and if the new code already exists
-        if (!course.getCourseCode().equals(courseDetails.getCourseCode()) &&
-                courseRepository.existsByCourseCode(courseDetails.getCourseCode())) {
-            throw new DuplicateResourceException("Course already exists with code: " + courseDetails.getCourseCode());
+        if (!course.getCourseCode().equals(request.getCourseCode()) &&
+                courseRepository.existsByCourseCode(request.getCourseCode())) {
+            throw new DuplicateResourceException("Course already exists with code: " + request.getCourseCode());
         }
         
-        course.setCourseCode(courseDetails.getCourseCode());
-        course.setCourseName(courseDetails.getCourseName());
-        course.setCredits(courseDetails.getCredits());
+        // Validate and fetch department
+        Department department = departmentRepository.findById(request.getDepartment().getDepartmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + request.getDepartment().getDepartmentId()));
         
-        if (courseDetails.getDepartment() != null && courseDetails.getDepartment().getDepartmentId() != null) {
-            departmentRepository.findById(courseDetails.getDepartment().getDepartmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Department not found"));
-            course.setDepartment(courseDetails.getDepartment());
-        }
+        // Update course fields
+        course.setCourseCode(request.getCourseCode());
+        course.setCourseName(request.getCourseName());
+        course.setCredits(request.getCredits());
+        course.setCourseType(request.getCourseType() != null ? 
+            Course.CourseType.valueOf(request.getCourseType()) : 
+            Course.CourseType.BAT_BUOC);
+        course.setDepartment(department);
         
         return courseRepository.save(course);
     }
