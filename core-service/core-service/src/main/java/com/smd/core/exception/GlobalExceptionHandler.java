@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -70,6 +71,31 @@ public class GlobalExceptionHandler {
                 .build();
         
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Xử lý MethodArgumentTypeMismatchException - HTTP 400 Bad Request
+     * Được gọi khi @PathVariable hoặc @RequestParam không match kiểu dữ liệu
+     * VD: DELETE /api/users/abc -> "abc" không phải Long
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatchException(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+        
+        String paramName = ex.getName();
+        String invalidValue = ex.getValue() != null ? ex.getValue().toString() : "null";
+        String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "Unknown";
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Bad Request");
+        response.put("message", paramName + " must be a valid " + requiredType + ", but got: " + invalidValue);
+        response.put("invalidValue", invalidValue);
+        response.put("path", request.getRequestURI());
+        
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     /**
