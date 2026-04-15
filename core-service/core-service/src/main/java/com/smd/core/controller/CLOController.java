@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,18 +51,21 @@ public class CLOController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CLOResponse> createCLO(@Valid @RequestBody CLORequest request) {
         CLO created = cloService.createCLO(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToDto(created));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CLOResponse> updateCLO(@PathVariable Long id, @Valid @RequestBody CLORequest request) {
         CLO updated = cloService.updateCLO(id, request);
         return ResponseEntity.ok(convertToDto(updated));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCLO(@PathVariable Long id) {
         cloService.deleteCLO(id);
         return ResponseEntity.noContent().build();
