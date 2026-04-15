@@ -51,21 +51,21 @@ public class CLOController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT', 'LECTURER')")
     public ResponseEntity<CLOResponse> createCLO(@Valid @RequestBody CLORequest request) {
         CLO created = cloService.createCLO(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToDto(created));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT', 'LECTURER')")
     public ResponseEntity<CLOResponse> updateCLO(@PathVariable Long id, @Valid @RequestBody CLORequest request) {
         CLO updated = cloService.updateCLO(id, request);
         return ResponseEntity.ok(convertToDto(updated));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS')")
     public ResponseEntity<Void> deleteCLO(@PathVariable Long id) {
         cloService.deleteCLO(id);
         return ResponseEntity.noContent().build();

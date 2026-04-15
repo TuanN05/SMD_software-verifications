@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -55,6 +56,7 @@ public class SyllabusController {
     private ProgramRepository programRepository;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT', 'LECTURER')")
     public ResponseEntity<?> create(@RequestBody Syllabus syllabus) {
         return ResponseEntity.ok(syllabusService.createSyllabus(syllabus));
     }
@@ -115,11 +117,13 @@ public class SyllabusController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT', 'LECTURER')")
     public ResponseEntity<Syllabus> update(@PathVariable long id, @RequestBody Syllabus syllabus){
         return ResponseEntity.ok(syllabusService.updateSyllabus(id, syllabus));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT')")
     public ResponseEntity<Void> delete(@PathVariable long id){
         syllabusService.deleteSyllabus(id);
         return ResponseEntity.noContent().build();
