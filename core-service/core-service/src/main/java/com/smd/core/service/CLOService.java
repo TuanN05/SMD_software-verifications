@@ -59,6 +59,10 @@ public class CLOService {
 
     @Transactional(readOnly = true)
     public List<CLO> getCLOsBySyllabusId(Long syllabusId) {
+        // Validate if Syllabus exists
+        if (!syllabusRepository.existsById(syllabusId)) {
+            throw new ResourceNotFoundException("Syllabus not found with id: " + syllabusId);
+        }
         return cloRepository.findBySyllabus_SyllabusId(syllabusId);
     }
 
