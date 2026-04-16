@@ -6,6 +6,7 @@ import com.smd.core.entity.CLO;
 import com.smd.core.entity.CLOPLOMapping;
 import com.smd.core.entity.Syllabus;
 import com.smd.core.exception.DuplicateResourceException;
+import com.smd.core.exception.InvalidDataException;
 import com.smd.core.exception.ResourceNotFoundException;
 import com.smd.core.repository.CLOPLOMappingRepository;
 import com.smd.core.repository.CLORepository;
@@ -113,6 +114,13 @@ public class CLOService {
         if (!cloRepository.existsById(id)) {
             throw new ResourceNotFoundException("CLO not found with id: " + id);
         }
+        
+        // Check if CLO has any active mappings with PLO
+        List<CLOPLOMapping> mappings = mappingRepository.findByClo_CloId(id);
+        if (!mappings.isEmpty()) {
+            throw new InvalidDataException("Cannot delete CLO that has active mappings with PLO. Please remove all mappings first.");
+        }
+        
         cloRepository.deleteById(id);
     }
 }
