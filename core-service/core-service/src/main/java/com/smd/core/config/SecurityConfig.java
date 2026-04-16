@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.Customizer;
+import org.springframework.validation.beanvalidation.MethodValidationPostProcessor;
 
 @Configuration
 @EnableWebSecurity
@@ -80,5 +81,14 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * Enable method-level validation for @PathVariable and @RequestParam constraints
+     * This is required for @Positive, @Min, @Max and other constraint annotations to work on method parameters
+     */
+    @Bean
+    public MethodValidationPostProcessor methodValidationPostProcessor() {
+        return new MethodValidationPostProcessor();
     }
 }

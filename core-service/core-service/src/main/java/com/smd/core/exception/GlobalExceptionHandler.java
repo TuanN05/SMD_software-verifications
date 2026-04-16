@@ -2,6 +2,8 @@ package com.smd.core.exception;
 
 import com.smd.core.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,6 +14,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -182,6 +185,32 @@ public class GlobalExceptionHandler {
                 .build();
         
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Xử lý constraint validation errors (@Positive, @Min, @Max, etc. trên path/query params) - HTTP 400
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(
+            ConstraintViolationException ex,
+            HttpServletRequest request) {
+        
+        Map<String, String> errors = ex.getConstraintViolations()
+            .stream()
+            .collect(Collectors.toMap(
+                violation -> violation.getPropertyPath().toString(),
+                ConstraintViolation::getMessage
+            ));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Constraint Violation");
+        response.put("message", "Tham số đầu vào không hợp lệ");
+        response.put("errors", errors);
+        response.put("path", request.getRequestURI());
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     /**
