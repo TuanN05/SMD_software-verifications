@@ -5,6 +5,7 @@ import com.smd.core.dto.AssessmentResponse;
 import com.smd.core.entity.Assessment;
 import com.smd.core.service.AssessmentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +30,13 @@ public class AssessmentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AssessmentResponse> getAssessmentById(@PathVariable Long id) {
+    public ResponseEntity<AssessmentResponse> getAssessmentById(@PathVariable @Positive Long id) {
         Assessment assessment = assessmentService.getAssessmentById(id);
         return ResponseEntity.ok(convertToDto(assessment));
     }
 
     @GetMapping("/syllabus/{syllabusId}")
-    public ResponseEntity<List<AssessmentResponse>> getAssessmentsBySyllabusId(@PathVariable Long syllabusId) {
+    public ResponseEntity<List<AssessmentResponse>> getAssessmentsBySyllabusId(@PathVariable @Positive Long syllabusId) {
         List<Assessment> assessments = assessmentService.getAssessmentsBySyllabusId(syllabusId);
         List<AssessmentResponse> response = assessments.stream()
             .map(this::convertToDto)
@@ -50,13 +51,13 @@ public class AssessmentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AssessmentResponse> updateAssessment(@PathVariable Long id, @Valid @RequestBody AssessmentRequest request) {
+    public ResponseEntity<AssessmentResponse> updateAssessment(@PathVariable @Positive Long id, @Valid @RequestBody AssessmentRequest request) {
         Assessment updated = assessmentService.updateAssessment(id, request);
         return ResponseEntity.ok(convertToDto(updated));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAssessment(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteAssessment(@PathVariable @Positive Long id) {
         assessmentService.deleteAssessment(id);
         return ResponseEntity.noContent().build();
     }
