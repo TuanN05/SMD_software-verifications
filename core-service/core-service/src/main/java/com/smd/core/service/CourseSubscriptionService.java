@@ -88,12 +88,12 @@ public CourseUnsubscriptionResponse unfollowCourse(String username, Long courseI
 }
 
 @Transactional(readOnly = true)
-public List<CourseSimpleDto> getFollowedCourses(String username) {
+public List<CourseSimpleDto> getFollowedCourses(String username, int page, int size) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Reuse CourseSimpleDto exist in your project
-        return subscriptionRepository.findByUser_UserId(user.getUserId()).stream()
+        List<CourseSimpleDto> allCourses = subscriptionRepository.findByUser_UserId(user.getUserId()).stream()
                 .map(sub -> {
                 Course c = sub.getCourse();
                 return CourseSimpleDto.builder() // Giả sử bạn có builder này
@@ -103,5 +103,10 @@ public List<CourseSimpleDto> getFollowedCourses(String username) {
                         .build();
                 })
                 .collect(Collectors.toList());
+
+        // Apply pagination
+        int start = page * size;
+        int end = Math.min(start + size, allCourses.size());
+        return allCourses.subList(start, end);
 }
 }

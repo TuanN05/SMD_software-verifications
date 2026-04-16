@@ -43,7 +43,9 @@ public class CourseSubscriptionController {
     @GetMapping("/following")
     @Operation(summary = "Get followed courses", description = "List all courses the current user is following")
     public ResponseEntity<List<CourseSimpleDto>> getFollowedCourses(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(subscriptionService.getFollowedCourses(userDetails.getUsername()));
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(subscriptionService.getFollowedCourses(userDetails.getUsername(), page, size));
     }
 }
