@@ -270,28 +270,18 @@ public class AuditLogController {
             @Positive(message = "Syllabus ID must be greater than 0")
             @PathVariable Long syllabusId
     ) {
-        try {
-            List<SyllabusAuditLog> auditLogs = auditLogService.getAuditLogsBySyllabus(syllabusId);
-            List<AuditLogResponse> response = auditLogs.stream()
-                    .map(AuditLogResponse::fromEntity)
-                    .collect(Collectors.toList());
-            
-            log.info("✓ Retrieved {} audit logs for syllabus ID: {}", response.size(), syllabusId);
-            
-            return ResponseEntity.ok(new ResponseWrapper<>(
-                true,
-                String.format("Found %d audit logs for syllabus ID: %d", response.size(), syllabusId),
-                response
-            ));
-            
-        } catch (Exception e) {
-            log.error("✗ Error retrieving audit logs for syllabus: {}", syllabusId, e);
-            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(
-                false,
-                "Failed to retrieve audit logs: " + e.getMessage(),
-                null
-            ));
-        }
+        List<SyllabusAuditLog> auditLogs = auditLogService.getAuditLogsBySyllabus(syllabusId);
+        List<AuditLogResponse> response = auditLogs.stream()
+                .map(AuditLogResponse::fromEntity)
+                .collect(Collectors.toList());
+        
+        log.info("✓ Retrieved {} audit logs for syllabus ID: {}", response.size(), syllabusId);
+        
+        return ResponseEntity.ok(new ResponseWrapper<>(
+            true,
+            String.format("Found %d audit logs for syllabus ID: %d", response.size(), syllabusId),
+            response
+        ));
     }
     
     /**
