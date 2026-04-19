@@ -153,6 +153,9 @@ public class AuditLogService {
      * Get all audit logs by a specific user
      */
     public List<SyllabusAuditLog> getAuditLogsByUser(String username) {
+        // Verify user exists - throw 404 if not found
+        userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
         return auditLogRepository.findByPerformedByOrderByTimestampDesc(username);
     }
     
