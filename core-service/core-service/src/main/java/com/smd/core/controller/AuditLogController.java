@@ -25,6 +25,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -62,56 +63,49 @@ public class AuditLogController {
             description = "Audit logs retrieved successfully",
             content = @Content(schema = @Schema(implementation = ResponseWrapper.class))
         ),
+        @ApiResponse(responseCode = "400", description = "Bad Request - page must be >= 0, size must be >= 1"),
         @ApiResponse(responseCode = "403", description = "Access denied - Admin role required"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public ResponseEntity<ResponseWrapper<Map<String, Object>>> getAllAuditLogs(
-            @Parameter(description = "Page number (0-indexed)") 
+            @Parameter(description = "Page number (0-indexed, must be >= 0)") 
+            @Min(value = 0, message = "Page must be >= 0")
             @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") 
+            @Parameter(description = "Page size (must be >= 1)") 
+            @Positive(message = "Page size must be >= 1")
             @RequestParam(defaultValue = "50") int size,
             @Parameter(description = "Sort by field (default: timestamp)") 
             @RequestParam(defaultValue = "timestamp") String sortBy,
             @Parameter(description = "Sort direction (asc/desc)") 
             @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        try {
-            Sort.Direction direction = sortDir.equalsIgnoreCase("asc") 
-                ? Sort.Direction.ASC 
-                : Sort.Direction.DESC;
-            
-            // Add secondary sort by id to ensure consistent ordering when primary sort values are equal
-            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy).and(Sort.by(Sort.Direction.DESC, "id")));
-            Page<SyllabusAuditLog> auditLogPage = auditLogService.getAllAuditLogs(pageable);
-            
-            List<AuditLogResponse> auditLogs = auditLogPage.getContent().stream()
-                    .map(AuditLogResponse::fromEntity)
-                    .collect(Collectors.toList());
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("auditLogs", auditLogs);
-            response.put("currentPage", auditLogPage.getNumber());
-            response.put("totalItems", auditLogPage.getTotalElements());
-            response.put("totalPages", auditLogPage.getTotalPages());
-            response.put("pageSize", auditLogPage.getSize());
-            
-            log.info("✓ Retrieved {} audit logs (page {}/{})", 
-                     auditLogs.size(), page + 1, auditLogPage.getTotalPages());
-            
-            return ResponseEntity.ok(new ResponseWrapper<>(
-                true,
-                "Audit logs retrieved successfully",
-                response
-            ));
-            
-        } catch (Exception e) {
-            log.error("✗ Error retrieving audit logs", e);
-            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(
-                false,
-                "Failed to retrieve audit logs: " + e.getMessage(),
-                null
-            ));
-        }
+        Sort.Direction direction = sortDir.equalsIgnoreCase("asc") 
+            ? Sort.Direction.ASC 
+            : Sort.Direction.DESC;
+        
+        // Add secondary sort by id to ensure consistent ordering when primary sort values are equal
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy).and(Sort.by(Sort.Direction.DESC, "id")));
+        Page<SyllabusAuditLog> auditLogPage = auditLogService.getAllAuditLogs(pageable);
+        
+        List<AuditLogResponse> auditLogs = auditLogPage.getContent().stream()
+                .map(AuditLogResponse::fromEntity)
+                .collect(Collectors.toList());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("auditLogs", auditLogs);
+        response.put("currentPage", auditLogPage.getNumber());
+        response.put("totalItems", auditLogPage.getTotalElements());
+        response.put("totalPages", auditLogPage.getTotalPages());
+        response.put("pageSize", auditLogPage.getSize());
+        
+        log.info("✓ Retrieved {} audit logs (page {}/{})", 
+                 auditLogs.size(), page + 1, auditLogPage.getTotalPages());
+        
+        return ResponseEntity.ok(new ResponseWrapper<>(
+            true,
+            "Audit logs retrieved successfully",
+            response
+        ));
     }
     
     /**
