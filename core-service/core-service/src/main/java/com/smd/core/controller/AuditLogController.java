@@ -21,7 +21,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.constraints.Positive;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/audit-logs")
 @Tag(name = "Audit Log Management", description = "APIs for monitoring and retrieving audit logs (Admin only)")
 @SecurityRequirement(name = "bearerAuth")
+@Validated
 @Slf4j
 public class AuditLogController {
     
@@ -258,10 +261,13 @@ public class AuditLogController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully"),
-        @ApiResponse(responseCode = "403", description = "Access denied")
+        @ApiResponse(responseCode = "400", description = "Bad Request - syllabusId must be positive"),
+        @ApiResponse(responseCode = "403", description = "Access denied"),
+        @ApiResponse(responseCode = "404", description = "Syllabus not found")
     })
     public ResponseEntity<ResponseWrapper<List<AuditLogResponse>>> getAuditLogsBySyllabus(
-            @Parameter(description = "Syllabus ID") 
+            @Parameter(description = "Syllabus ID - must be greater than 0") 
+            @Positive(message = "Syllabus ID must be greater than 0")
             @PathVariable Long syllabusId
     ) {
         try {
