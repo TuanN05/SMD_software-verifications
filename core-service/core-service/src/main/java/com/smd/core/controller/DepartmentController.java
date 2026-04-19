@@ -1,6 +1,7 @@
 package com.smd.core.controller;
 
 import com.smd.core.dto.CourseSimpleDto;
+import com.smd.core.dto.DepartmentRequest;
 import com.smd.core.dto.DepartmentResponse;
 import com.smd.core.dto.ProgramSimpleDto;
 import com.smd.core.entity.Department;
@@ -39,13 +40,17 @@ public class DepartmentController {
     }
 
     @PostMapping
-    public ResponseEntity<DepartmentResponse> createDepartment(@Valid @RequestBody Department department) {
+    public ResponseEntity<DepartmentResponse> createDepartment(@Valid @RequestBody DepartmentRequest request) {
+        Department department = new Department();
+        department.setDeptName(request.getDeptName());
         Department created = departmentService.createDepartment(department);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToDto(created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DepartmentResponse> updateDepartment(@Positive @PathVariable Long id, @Valid @RequestBody Department department) {
+    public ResponseEntity<DepartmentResponse> updateDepartment(@Positive @PathVariable Long id, @Valid @RequestBody DepartmentRequest request) {
+        Department department = new Department();
+        department.setDeptName(request.getDeptName());
         Department updated = departmentService.updateDepartment(id, department);
         return ResponseEntity.ok(convertToDto(updated));
     }
