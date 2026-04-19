@@ -227,7 +227,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.FORBIDDEN.value())
                 .error("Forbidden")
-                .message("Bạn không có quyền truy cập tài nguyên này. Chỉ ADMIN mới có thể xem audit logs.")
+                .message("Bạn không có quyền truy cập tài nguyên này.")
                 .path(request.getRequestURI())
                 .build();
         
