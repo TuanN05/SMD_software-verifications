@@ -24,6 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -371,34 +372,26 @@ public class AuditLogController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Bad Request - academicYear cannot be empty"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<ResponseWrapper<List<AuditLogResponse>>> getAuditLogsByAcademicYear(
             @Parameter(description = "Academic year (e.g., 2024-2025)") 
+            @NotBlank(message = "Academic year cannot be empty")
             @PathVariable String academicYear
     ) {
-        try {
-            List<SyllabusAuditLog> auditLogs = auditLogService.getAuditLogsByAcademicYear(academicYear);
-            List<AuditLogResponse> response = auditLogs.stream()
-                    .map(AuditLogResponse::fromEntity)
-                    .collect(Collectors.toList());
-            
-            log.info("✓ Retrieved {} audit logs for academic year: {}", response.size(), academicYear);
-            
-            return ResponseEntity.ok(new ResponseWrapper<>(
-                true,
-                String.format("Found %d audit logs for academic year: %s", response.size(), academicYear),
-                response
-            ));
-            
-        } catch (Exception e) {
-            log.error("✗ Error retrieving audit logs for academic year: {}", academicYear, e);
-            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(
-                false,
-                "Failed to retrieve audit logs: " + e.getMessage(),
-                null
-            ));
-        }
+        List<SyllabusAuditLog> auditLogs = auditLogService.getAuditLogsByAcademicYear(academicYear);
+        List<AuditLogResponse> response = auditLogs.stream()
+                .map(AuditLogResponse::fromEntity)
+                .collect(Collectors.toList());
+        
+        log.info("✓ Retrieved {} audit logs for academic year: {}", response.size(), academicYear);
+        
+        return ResponseEntity.ok(new ResponseWrapper<>(
+            true,
+            String.format("Found %d audit logs for academic year: %s", response.size(), academicYear),
+            response
+        ));
     }
     
 }
