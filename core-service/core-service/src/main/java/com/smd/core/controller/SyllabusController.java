@@ -599,16 +599,18 @@ public class SyllabusController {
     // ==================== AUDIT LOG ENDPOINTS ====================
     
     @GetMapping("/{id}/audit-logs")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get audit logs for a syllabus",
         description = "Retrieve complete audit trail for all actions performed on a specific syllabus. " +
-                     "Includes workflow transitions, PDF operations, and other changes.",
+                     "Includes workflow transitions, PDF operations, and other changes. Admin only.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Syllabus not found"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Access denied - Admin role required")
     })
     public ResponseEntity<List<AuditLogResponse>> getAuditLogsBySyllabus(
             @Parameter(description = "Syllabus ID", required = true)
@@ -622,15 +624,17 @@ public class SyllabusController {
     }
     
     @GetMapping("/{id}/audit-workflow-history")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get audit workflow history for a syllabus",
-        description = "Retrieve only workflow-related audit logs (submit, approve, reject actions) in chronological order",
+        description = "Retrieve only workflow-related audit logs (submit, approve, reject actions) in chronological order. Admin only.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Workflow history retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Syllabus not found"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Access denied - Admin role required")
     })
     public ResponseEntity<List<AuditLogResponse>> getAuditWorkflowHistory(
             @Parameter(description = "Syllabus ID", required = true)
@@ -665,6 +669,7 @@ public class SyllabusController {
     }
     
     @GetMapping("/audit-logs/user/{username}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get audit logs by specific user",
         description = "Retrieve all audit logs for actions performed by a specific user. " +
@@ -688,14 +693,16 @@ public class SyllabusController {
     }
     
     @GetMapping("/audit-logs/recent")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get recent audit logs",
-        description = "Retrieve audit logs from the last N days (default: 7 days)",
+        description = "Retrieve audit logs from the last N days (default: 7 days). Admin only.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Recent audit logs retrieved successfully"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Access denied - Admin role required")
     })
     public ResponseEntity<List<AuditLogResponse>> getRecentAuditLogs(
             @Parameter(description = "Number of days to look back (default: 7)")
@@ -709,15 +716,17 @@ public class SyllabusController {
     }
     
     @GetMapping("/audit-logs/date-range")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get audit logs by date range",
-        description = "Retrieve audit logs within a specific date range. Useful for generating audit reports.",
+        description = "Retrieve audit logs within a specific date range. Useful for generating audit reports. Admin only.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid date format"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Access denied - Admin role required")
     })
     public ResponseEntity<?> getAuditLogsByDateRange(
             @Parameter(description = "Start date (ISO format: yyyy-MM-dd'T'HH:mm:ss)", required = true)

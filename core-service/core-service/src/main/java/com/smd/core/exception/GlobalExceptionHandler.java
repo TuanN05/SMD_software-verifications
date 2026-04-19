@@ -6,6 +6,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -211,6 +212,26 @@ public class GlobalExceptionHandler {
         response.put("path", request.getRequestURI());
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Xử lý AccessDeniedException - HTTP 403 Forbidden
+     * Được throw bởi Spring Security khi @PreAuthorize check fail
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+        
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.FORBIDDEN.value())
+                .error("Forbidden")
+                .message("Bạn không có quyền truy cập tài nguyên này. Chỉ ADMIN mới có thể xem audit logs.")
+                .path(request.getRequestURI())
+                .build();
+        
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
     /**
