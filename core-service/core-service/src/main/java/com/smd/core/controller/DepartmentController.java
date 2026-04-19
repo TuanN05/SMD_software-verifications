@@ -5,6 +5,7 @@ import com.smd.core.dto.DepartmentResponse;
 import com.smd.core.dto.ProgramSimpleDto;
 import com.smd.core.entity.Department;
 import com.smd.core.service.DepartmentService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -38,13 +39,13 @@ public class DepartmentController {
     }
 
     @PostMapping
-    public ResponseEntity<DepartmentResponse> createDepartment(@RequestBody Department department) {
+    public ResponseEntity<DepartmentResponse> createDepartment(@Valid @RequestBody Department department) {
         Department created = departmentService.createDepartment(department);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToDto(created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DepartmentResponse> updateDepartment(@Positive @PathVariable Long id, @RequestBody Department department) {
+    public ResponseEntity<DepartmentResponse> updateDepartment(@Positive @PathVariable Long id, @Valid @RequestBody Department department) {
         Department updated = departmentService.updateDepartment(id, department);
         return ResponseEntity.ok(convertToDto(updated));
     }

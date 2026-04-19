@@ -2,6 +2,7 @@ package com.smd.core.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class Department {
     private Long departmentId;
 
     @Column(name = "dept_name", nullable = false)
+    @NotBlank(message = "Department name cannot be empty or blank")
     private String deptName;
 
     // Head of Department reference
