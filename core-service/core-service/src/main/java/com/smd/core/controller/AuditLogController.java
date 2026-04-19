@@ -80,7 +80,8 @@ public class AuditLogController {
                 ? Sort.Direction.ASC 
                 : Sort.Direction.DESC;
             
-            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+            // Add secondary sort by id to ensure consistent ordering when primary sort values are equal
+            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy).and(Sort.by(Sort.Direction.DESC, "id")));
             Page<SyllabusAuditLog> auditLogPage = auditLogService.getAllAuditLogs(pageable);
             
             List<AuditLogResponse> auditLogs = auditLogPage.getContent().stream()
