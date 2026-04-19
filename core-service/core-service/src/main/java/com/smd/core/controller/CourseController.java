@@ -1,12 +1,15 @@
 package com.smd.core.controller;
 
 import com.smd.core.dto.CourseResponse;
+import com.smd.core.dto.CourseRequest;
 import com.smd.core.dto.DepartmentSimpleDto;
 import com.smd.core.entity.Course;
 import com.smd.core.service.CourseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.smd.core.dto.CourseRelationResponse;
 
@@ -41,18 +44,21 @@ public class CourseController {
     }
 
     @PostMapping
-    public ResponseEntity<CourseResponse> createCourse(@RequestBody Course course) {
-        Course created = courseService.createCourse(course);
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS')")
+    public ResponseEntity<CourseResponse> createCourse(@Valid @RequestBody CourseRequest request) {
+        Course created = courseService.createCourse(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToDto(created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CourseResponse> updateCourse(@PathVariable Long id, @RequestBody Course course) {
-        Course updated = courseService.updateCourse(id, course);
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT')")
+    public ResponseEntity<CourseResponse> updateCourse(@PathVariable Long id, @Valid @RequestBody CourseRequest request) {
+        Course updated = courseService.updateCourse(id, request);
         return ResponseEntity.ok(convertToDto(updated));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS')")
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         courseService.deleteCourse(id);
         return ResponseEntity.noContent().build();

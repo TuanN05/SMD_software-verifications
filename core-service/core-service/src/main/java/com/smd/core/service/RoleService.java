@@ -162,7 +162,7 @@ public class RoleService {
      */
     @Transactional
     public void initializeDefaultRoles() {
-        String[] defaultRoles = {"ADMIN", "LECTURER", "HEAD_OF_DEPARTMENT", "ACADEMIC_AFFAIRS", "STUDENT"};
+        String[] defaultRoles = {"ADMIN", "LECTURER", "HEAD_OF_DEPARTMENT", "ACADEMIC_AFFAIRS", "PRINCIPAL", "STUDENT"};
 
         for (String roleName : defaultRoles) {
             if (roleRepository.findByRoleName(roleName).isEmpty()) {

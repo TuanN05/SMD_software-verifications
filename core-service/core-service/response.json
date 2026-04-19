@@ -1,0 +1,1 @@
+{"path":"/api/assessments/-1","error":"Constraint Violation","message":"Tham số đầu vào không hợp lệ","errors":{"getAssessmentById.id":"must be greater than 0"},"timestamp":"2026-04-16T20:07:18.9544953","status":400}

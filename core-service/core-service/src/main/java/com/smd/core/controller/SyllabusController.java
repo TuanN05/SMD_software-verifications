@@ -19,13 +19,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +38,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/syllabuses")
 @Tag(name = "Syllabus Management", description = "APIs for managing syllabuses")
+@Validated
 public class SyllabusController {
     @Autowired
     private SyllabusService syllabusService;
@@ -55,6 +59,7 @@ public class SyllabusController {
     private ProgramRepository programRepository;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT', 'LECTURER')")
     public ResponseEntity<?> create(@RequestBody Syllabus syllabus) {
         return ResponseEntity.ok(syllabusService.createSyllabus(syllabus));
     }
@@ -115,11 +120,13 @@ public class SyllabusController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT', 'LECTURER')")
     public ResponseEntity<Syllabus> update(@PathVariable long id, @RequestBody Syllabus syllabus){
         return ResponseEntity.ok(syllabusService.updateSyllabus(id, syllabus));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS', 'HEAD_OF_DEPARTMENT')")
     public ResponseEntity<Void> delete(@PathVariable long id){
         syllabusService.deleteSyllabus(id);
         return ResponseEntity.noContent().build();
@@ -595,16 +602,18 @@ public class SyllabusController {
     // ==================== AUDIT LOG ENDPOINTS ====================
     
     @GetMapping("/{id}/audit-logs")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get audit logs for a syllabus",
         description = "Retrieve complete audit trail for all actions performed on a specific syllabus. " +
-                     "Includes workflow transitions, PDF operations, and other changes.",
+                     "Includes workflow transitions, PDF operations, and other changes. Admin only.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Syllabus not found"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Access denied - Admin role required")
     })
     public ResponseEntity<List<AuditLogResponse>> getAuditLogsBySyllabus(
             @Parameter(description = "Syllabus ID", required = true)
@@ -618,15 +627,17 @@ public class SyllabusController {
     }
     
     @GetMapping("/{id}/audit-workflow-history")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get audit workflow history for a syllabus",
-        description = "Retrieve only workflow-related audit logs (submit, approve, reject actions) in chronological order",
+        description = "Retrieve only workflow-related audit logs (submit, approve, reject actions) in chronological order. Admin only.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Workflow history retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Syllabus not found"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Access denied - Admin role required")
     })
     public ResponseEntity<List<AuditLogResponse>> getAuditWorkflowHistory(
             @Parameter(description = "Syllabus ID", required = true)
@@ -661,6 +672,7 @@ public class SyllabusController {
     }
     
     @GetMapping("/audit-logs/user/{username}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get audit logs by specific user",
         description = "Retrieve all audit logs for actions performed by a specific user. " +
@@ -684,18 +696,20 @@ public class SyllabusController {
     }
     
     @GetMapping("/audit-logs/recent")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get recent audit logs",
-        description = "Retrieve audit logs from the last N days (default: 7 days)",
+        description = "Retrieve audit logs from the last N days (default: 7 days). Admin only.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Recent audit logs retrieved successfully"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Access denied - Admin role required")
     })
     public ResponseEntity<List<AuditLogResponse>> getRecentAuditLogs(
             @Parameter(description = "Number of days to look back (default: 7)")
-            @RequestParam(defaultValue = "7") int days) {
+            @Positive @RequestParam(defaultValue = "7") int days) {
         
         List<SyllabusAuditLog> logs = auditLogService.getRecentAuditLogs(days);
         List<AuditLogResponse> response = logs.stream()
@@ -705,30 +719,42 @@ public class SyllabusController {
     }
     
     @GetMapping("/audit-logs/date-range")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Get audit logs by date range",
-        description = "Retrieve audit logs within a specific date range. Useful for generating audit reports.",
+        description = "Retrieve audit logs within a specific date range. Useful for generating audit reports. Admin only.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid date format"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Access denied - Admin role required")
     })
-    public ResponseEntity<List<AuditLogResponse>> getAuditLogsByDateRange(
+    public ResponseEntity<?> getAuditLogsByDateRange(
             @Parameter(description = "Start date (ISO format: yyyy-MM-dd'T'HH:mm:ss)", required = true)
             @RequestParam String startDate,
             @Parameter(description = "End date (ISO format: yyyy-MM-dd'T'HH:mm:ss)", required = true)
             @RequestParam String endDate) {
         
-        java.time.LocalDateTime start = java.time.LocalDateTime.parse(startDate);
-        java.time.LocalDateTime end = java.time.LocalDateTime.parse(endDate);
-        
-        List<SyllabusAuditLog> logs = auditLogService.getAuditLogsByDateRange(start, end);
-        List<AuditLogResponse> response = logs.stream()
-                .map(AuditLogResponse::fromEntity)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(response);
+        try {
+            java.time.LocalDateTime start = java.time.LocalDateTime.parse(startDate);
+            java.time.LocalDateTime end = java.time.LocalDateTime.parse(endDate);
+            
+            List<SyllabusAuditLog> logs = auditLogService.getAuditLogsByDateRange(start, end);
+            List<AuditLogResponse> response = logs.stream()
+                    .map(AuditLogResponse::fromEntity)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(response);
+        } catch (java.time.format.DateTimeParseException e) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    400,
+                    "Bad Request",
+                    "Invalid date format. Expected format: yyyy-MM-dd'T'HH:mm:ss (e.g., 2026-03-01T00:00:00)",
+                    "/api/syllabuses/audit-logs/date-range"
+            );
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 }
 

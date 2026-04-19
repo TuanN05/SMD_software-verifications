@@ -5,6 +5,8 @@ import com.smd.core.dto.CLOResponse;
 import com.smd.core.entity.CLO;
 import com.smd.core.entity.CLOPLOMapping;
 import com.smd.core.entity.Syllabus;
+import com.smd.core.exception.DuplicateResourceException;
+import com.smd.core.exception.InvalidDataException;
 import com.smd.core.exception.ResourceNotFoundException;
 import com.smd.core.repository.CLOPLOMappingRepository;
 import com.smd.core.repository.CLORepository;
@@ -58,6 +60,10 @@ public class CLOService {
 
     @Transactional(readOnly = true)
     public List<CLO> getCLOsBySyllabusId(Long syllabusId) {
+        // Validate if Syllabus exists
+        if (!syllabusRepository.existsById(syllabusId)) {
+            throw new ResourceNotFoundException("Syllabus not found with id: " + syllabusId);
+        }
         return cloRepository.findBySyllabus_SyllabusId(syllabusId);
     }
 
@@ -65,6 +71,12 @@ public class CLOService {
     public CLO createCLO(CLORequest request) {
         Syllabus syllabus = syllabusRepository.findById(request.getSyllabusId())
                 .orElseThrow(() -> new ResourceNotFoundException("Syllabus not found with id: " + request.getSyllabusId()));
+        
+        // Check for duplicate CLO code in the same syllabus
+        cloRepository.findByCloCodeAndSyllabus_SyllabusId(request.getCloCode(), request.getSyllabusId())
+                .ifPresent(existing -> {
+                    throw new DuplicateResourceException("CLO", "cloCode", request.getCloCode());
+                });
         
         CLO clo = CLO.builder()
                 .syllabus(syllabus)
@@ -82,6 +94,14 @@ public class CLOService {
         Syllabus syllabus = syllabusRepository.findById(request.getSyllabusId())
                 .orElseThrow(() -> new ResourceNotFoundException("Syllabus not found with id: " + request.getSyllabusId()));
         
+        // Check for duplicate CLO code in the same syllabus (excluding current CLO)
+        if (!clo.getCloCode().equals(request.getCloCode())) {
+            cloRepository.findByCloCodeAndSyllabus_SyllabusId(request.getCloCode(), request.getSyllabusId())
+                    .ifPresent(existing -> {
+                        throw new DuplicateResourceException("CLO", "cloCode", request.getCloCode());
+                    });
+        }
+        
         clo.setCloCode(request.getCloCode());
         clo.setCloDescription(request.getCloDescription());
         clo.setSyllabus(syllabus);
@@ -94,6 +114,13 @@ public class CLOService {
         if (!cloRepository.existsById(id)) {
             throw new ResourceNotFoundException("CLO not found with id: " + id);
         }
+        
+        // Check if CLO has any active mappings with PLO
+        List<CLOPLOMapping> mappings = mappingRepository.findByClo_CloId(id);
+        if (!mappings.isEmpty()) {
+            throw new InvalidDataException("Cannot delete CLO that has active mappings with PLO. Please remove all mappings first.");
+        }
+        
         cloRepository.deleteById(id);
     }
 }

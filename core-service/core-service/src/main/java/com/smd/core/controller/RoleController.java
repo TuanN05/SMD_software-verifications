@@ -1,6 +1,7 @@
 package com.smd.core.controller;
 
 import com.smd.core.dto.AssignRoleRequest;
+import com.smd.core.dto.RoleRequest;
 import com.smd.core.dto.RoleResponse;
 import com.smd.core.dto.UserRoleResponse;
 import com.smd.core.entity.Role;
@@ -11,8 +12,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,19 +44,21 @@ public class RoleController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new role", description = "Create a new role in the system (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Role created successfully"),
-        @ApiResponse(responseCode = "400", description = "Role already exists")
+        @ApiResponse(responseCode = "400", description = "Invalid input or role already exists"),
+        @ApiResponse(responseCode = "403", description = "User does not have permission to create roles")
     })
     public ResponseEntity<RoleResponse> createRole(
-            @Parameter(description = "Role name to create (e.g., ADMIN, LECTURER)")
-            @RequestParam String roleName) {
-        Role role = roleService.createRole(roleName);
+            @Valid @RequestBody RoleRequest request) {
+        Role role = roleService.createRole(request.getRoleName());
         return ResponseEntity.ok(convertToDto(role));
     }
 
     @PostMapping("/assign")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Assign role to user",
         description = "Assign a specific role to a user. Only admins can perform this action."
@@ -61,19 +66,22 @@ public class RoleController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Role assigned successfully"),
         @ApiResponse(responseCode = "400", description = "User already has this role"),
+        @ApiResponse(responseCode = "403", description = "User does not have permission"),
         @ApiResponse(responseCode = "404", description = "User or role not found")
     })
-    public ResponseEntity<UserRoleResponse> assignRole(@RequestBody AssignRoleRequest request) {
+    public ResponseEntity<UserRoleResponse> assignRole(@Valid @RequestBody AssignRoleRequest request) {
         return ResponseEntity.ok(roleService.assignRoleToUser(request));
     }
 
     @DeleteMapping("/remove")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Remove role from user",
         description = "Remove a specific role from a user. Only admins can perform this action."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Role removed successfully"),
+        @ApiResponse(responseCode = "403", description = "User does not have permission"),
         @ApiResponse(responseCode = "404", description = "User or role not found")
     })
     public ResponseEntity<UserRoleResponse> removeRole(
@@ -101,12 +109,14 @@ public class RoleController {
     }
 
     @PostMapping("/initialize")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Initialize default roles",
-        description = "Create default roles (ADMIN, LECTURER, HEAD_OF_DEPARTMENT, ACADEMIC_AFFAIRS, STUDENT) if they don't exist"
+        description = "Create default roles (ADMIN, LECTURER, HEAD_OF_DEPARTMENT, ACADEMIC_AFFAIRS, PRINCIPAL, STUDENT) if they don't exist"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Default roles initialized")
+        @ApiResponse(responseCode = "200", description = "Default roles initialized"),
+        @ApiResponse(responseCode = "403", description = "User does not have permission")
     })
     public ResponseEntity<String> initializeDefaultRoles() {
         roleService.initializeDefaultRoles();

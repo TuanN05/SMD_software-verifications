@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -57,6 +58,7 @@ public class CLOPLOMappingController {
     }
     
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS')")
     @Operation(summary = "Create a new CLO-PLO mapping")
     public ResponseEntity<CLOPLOMappingResponse> createMapping(
             @RequestBody Map<String, Object> request) {
@@ -69,6 +71,7 @@ public class CLOPLOMappingController {
     }
     
     @PostMapping("/batch")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS')")
     @Operation(summary = "Create multiple mappings for a CLO")
     public ResponseEntity<List<CLOPLOMappingResponse>> createMappingsForCLO(
             @RequestBody Map<String, Object> request) {
@@ -85,6 +88,7 @@ public class CLOPLOMappingController {
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS')")
     @Operation(summary = "Update mapping level")
     public ResponseEntity<CLOPLOMappingResponse> updateMapping(
             @PathVariable Long id,
@@ -94,6 +98,7 @@ public class CLOPLOMappingController {
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS')")
     @Operation(summary = "Delete a CLO-PLO mapping")
     public ResponseEntity<Void> deleteMapping(@PathVariable Long id) {
         mappingService.deleteMapping(id);
@@ -101,6 +106,7 @@ public class CLOPLOMappingController {
     }
     
     @DeleteMapping("/clo/{cloId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS')")
     @Operation(summary = "Delete all mappings for a CLO")
     public ResponseEntity<Void> deleteMappingsByCloId(@PathVariable Long cloId) {
         mappingService.deleteMappingsByCloId(cloId);
@@ -108,6 +114,7 @@ public class CLOPLOMappingController {
     }
     
     @DeleteMapping("/plo/{ploId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_AFFAIRS')")
     @Operation(summary = "Delete all mappings for a PLO")
     public ResponseEntity<Void> deleteMappingsByPloId(@PathVariable Long ploId) {
         mappingService.deleteMappingsByPloId(ploId);

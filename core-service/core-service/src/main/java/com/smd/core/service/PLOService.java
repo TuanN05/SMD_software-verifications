@@ -5,6 +5,7 @@ import com.smd.core.dto.PLOResponse;
 import com.smd.core.entity.CLOPLOMapping;
 import com.smd.core.entity.PLO;
 import com.smd.core.entity.Program;
+import com.smd.core.exception.DuplicateResourceException;
 import com.smd.core.exception.ResourceNotFoundException;
 import com.smd.core.repository.CLOPLOMappingRepository;
 import com.smd.core.repository.PLORepository;
@@ -71,6 +72,12 @@ public class PLOService {
         Program program = programRepository.findById(request.getProgramId())
                 .orElseThrow(() -> new ResourceNotFoundException("Program not found with id: " + request.getProgramId()));
         
+        // Check for duplicate PLO code in the same program
+        ploRepository.findByPloCodeAndProgram_ProgramId(request.getPloCode(), request.getProgramId())
+                .ifPresent(existing -> {
+                    throw new DuplicateResourceException("PLO", "ploCode", request.getPloCode() + " in program: " + program.getProgramName());
+                });
+        
         PLO plo = PLO.builder()
                 .program(program)
                 .ploCode(request.getPloCode())
@@ -86,6 +93,14 @@ public class PLOService {
         
         Program program = programRepository.findById(request.getProgramId())
                 .orElseThrow(() -> new ResourceNotFoundException("Program not found with id: " + request.getProgramId()));
+        
+        // Check for duplicate PLO code in the same program (excluding current PLO)
+        if (!plo.getPloCode().equals(request.getPloCode())) {
+            ploRepository.findByPloCodeAndProgram_ProgramId(request.getPloCode(), request.getProgramId())
+                    .ifPresent(existing -> {
+                        throw new DuplicateResourceException("PLO", "ploCode", request.getPloCode() + " in program: " + program.getProgramName());
+                    });
+        }
         
         plo.setPloCode(request.getPloCode());
         plo.setPloDescription(request.getPloDescription());

@@ -21,7 +21,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -37,6 +41,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/audit-logs")
 @Tag(name = "Audit Log Management", description = "APIs for monitoring and retrieving audit logs (Admin only)")
 @SecurityRequirement(name = "bearerAuth")
+@Validated
 @Slf4j
 public class AuditLogController {
     
@@ -58,55 +63,49 @@ public class AuditLogController {
             description = "Audit logs retrieved successfully",
             content = @Content(schema = @Schema(implementation = ResponseWrapper.class))
         ),
+        @ApiResponse(responseCode = "400", description = "Bad Request - page must be >= 0, size must be >= 1"),
         @ApiResponse(responseCode = "403", description = "Access denied - Admin role required"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public ResponseEntity<ResponseWrapper<Map<String, Object>>> getAllAuditLogs(
-            @Parameter(description = "Page number (0-indexed)") 
+            @Parameter(description = "Page number (0-indexed, must be >= 0)") 
+            @Min(value = 0, message = "Page must be >= 0")
             @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") 
+            @Parameter(description = "Page size (must be >= 1)") 
+            @Positive(message = "Page size must be >= 1")
             @RequestParam(defaultValue = "50") int size,
             @Parameter(description = "Sort by field (default: timestamp)") 
             @RequestParam(defaultValue = "timestamp") String sortBy,
             @Parameter(description = "Sort direction (asc/desc)") 
             @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        try {
-            Sort.Direction direction = sortDir.equalsIgnoreCase("asc") 
-                ? Sort.Direction.ASC 
-                : Sort.Direction.DESC;
-            
-            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-            Page<SyllabusAuditLog> auditLogPage = auditLogService.getAllAuditLogs(pageable);
-            
-            List<AuditLogResponse> auditLogs = auditLogPage.getContent().stream()
-                    .map(AuditLogResponse::fromEntity)
-                    .collect(Collectors.toList());
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("auditLogs", auditLogs);
-            response.put("currentPage", auditLogPage.getNumber());
-            response.put("totalItems", auditLogPage.getTotalElements());
-            response.put("totalPages", auditLogPage.getTotalPages());
-            response.put("pageSize", auditLogPage.getSize());
-            
-            log.info("✓ Retrieved {} audit logs (page {}/{})", 
-                     auditLogs.size(), page + 1, auditLogPage.getTotalPages());
-            
-            return ResponseEntity.ok(new ResponseWrapper<>(
-                true,
-                "Audit logs retrieved successfully",
-                response
-            ));
-            
-        } catch (Exception e) {
-            log.error("✗ Error retrieving audit logs", e);
-            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(
-                false,
-                "Failed to retrieve audit logs: " + e.getMessage(),
-                null
-            ));
-        }
+        Sort.Direction direction = sortDir.equalsIgnoreCase("asc") 
+            ? Sort.Direction.ASC 
+            : Sort.Direction.DESC;
+        
+        // Add secondary sort by id to ensure consistent ordering when primary sort values are equal
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy).and(Sort.by(Sort.Direction.DESC, "id")));
+        Page<SyllabusAuditLog> auditLogPage = auditLogService.getAllAuditLogs(pageable);
+        
+        List<AuditLogResponse> auditLogs = auditLogPage.getContent().stream()
+                .map(AuditLogResponse::fromEntity)
+                .collect(Collectors.toList());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("auditLogs", auditLogs);
+        response.put("currentPage", auditLogPage.getNumber());
+        response.put("totalItems", auditLogPage.getTotalElements());
+        response.put("totalPages", auditLogPage.getTotalPages());
+        response.put("pageSize", auditLogPage.getSize());
+        
+        log.info("✓ Retrieved {} audit logs (page {}/{})", 
+                 auditLogs.size(), page + 1, auditLogPage.getTotalPages());
+        
+        return ResponseEntity.ok(new ResponseWrapper<>(
+            true,
+            "Audit logs retrieved successfully",
+            response
+        ));
     }
     
     /**
@@ -258,34 +257,27 @@ public class AuditLogController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully"),
-        @ApiResponse(responseCode = "403", description = "Access denied")
+        @ApiResponse(responseCode = "400", description = "Bad Request - syllabusId must be positive"),
+        @ApiResponse(responseCode = "403", description = "Access denied"),
+        @ApiResponse(responseCode = "404", description = "Syllabus not found")
     })
     public ResponseEntity<ResponseWrapper<List<AuditLogResponse>>> getAuditLogsBySyllabus(
-            @Parameter(description = "Syllabus ID") 
+            @Parameter(description = "Syllabus ID - must be greater than 0") 
+            @Positive(message = "Syllabus ID must be greater than 0")
             @PathVariable Long syllabusId
     ) {
-        try {
-            List<SyllabusAuditLog> auditLogs = auditLogService.getAuditLogsBySyllabus(syllabusId);
-            List<AuditLogResponse> response = auditLogs.stream()
-                    .map(AuditLogResponse::fromEntity)
-                    .collect(Collectors.toList());
-            
-            log.info("✓ Retrieved {} audit logs for syllabus ID: {}", response.size(), syllabusId);
-            
-            return ResponseEntity.ok(new ResponseWrapper<>(
-                true,
-                String.format("Found %d audit logs for syllabus ID: %d", response.size(), syllabusId),
-                response
-            ));
-            
-        } catch (Exception e) {
-            log.error("✗ Error retrieving audit logs for syllabus: {}", syllabusId, e);
-            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(
-                false,
-                "Failed to retrieve audit logs: " + e.getMessage(),
-                null
-            ));
-        }
+        List<SyllabusAuditLog> auditLogs = auditLogService.getAuditLogsBySyllabus(syllabusId);
+        List<AuditLogResponse> response = auditLogs.stream()
+                .map(AuditLogResponse::fromEntity)
+                .collect(Collectors.toList());
+        
+        log.info("✓ Retrieved {} audit logs for syllabus ID: {}", response.size(), syllabusId);
+        
+        return ResponseEntity.ok(new ResponseWrapper<>(
+            true,
+            String.format("Found %d audit logs for syllabus ID: %d", response.size(), syllabusId),
+            response
+        ));
     }
     
     /**
@@ -303,30 +295,20 @@ public class AuditLogController {
     })
     public ResponseEntity<ResponseWrapper<List<AuditLogResponse>>> getRecentAuditLogs(
             @Parameter(description = "Number of days to look back (default: 7)") 
-            @RequestParam(defaultValue = "7") int days
+            @Positive @RequestParam(defaultValue = "7") int days
     ) {
-        try {
-            List<SyllabusAuditLog> auditLogs = auditLogService.getRecentAuditLogs(days);
-            List<AuditLogResponse> response = auditLogs.stream()
-                    .map(AuditLogResponse::fromEntity)
-                    .collect(Collectors.toList());
-            
-            log.info("✓ Retrieved {} audit logs from the last {} days", response.size(), days);
-            
-            return ResponseEntity.ok(new ResponseWrapper<>(
-                true,
-                String.format("Found %d audit logs from the last %d days", response.size(), days),
-                response
-            ));
-            
-        } catch (Exception e) {
-            log.error("✗ Error retrieving recent audit logs", e);
-            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(
-                false,
-                "Failed to retrieve audit logs: " + e.getMessage(),
-                null
-            ));
-        }
+        List<SyllabusAuditLog> auditLogs = auditLogService.getRecentAuditLogs(days);
+        List<AuditLogResponse> response = auditLogs.stream()
+                .map(AuditLogResponse::fromEntity)
+                .collect(Collectors.toList());
+        
+        log.info("✓ Retrieved {} audit logs from the last {} days", response.size(), days);
+        
+        return ResponseEntity.ok(new ResponseWrapper<>(
+            true,
+            String.format("Found %d audit logs from the last %d days", response.size(), days),
+            response
+        ));
     }
     
     /**
@@ -375,33 +357,26 @@ public class AuditLogController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Bad Request - academicYear cannot be empty"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<ResponseWrapper<List<AuditLogResponse>>> getAuditLogsByAcademicYear(
             @Parameter(description = "Academic year (e.g., 2024-2025)") 
+            @NotBlank(message = "Academic year cannot be empty")
             @PathVariable String academicYear
     ) {
-        try {
-            List<SyllabusAuditLog> auditLogs = auditLogService.getAuditLogsByAcademicYear(academicYear);
-            List<AuditLogResponse> response = auditLogs.stream()
-                    .map(AuditLogResponse::fromEntity)
-                    .collect(Collectors.toList());
-            
-            log.info("✓ Retrieved {} audit logs for academic year: {}", response.size(), academicYear);
-            
-            return ResponseEntity.ok(new ResponseWrapper<>(
-                true,
-                String.format("Found %d audit logs for academic year: %s", response.size(), academicYear),
-                response
-            ));
-            
-        } catch (Exception e) {
-            log.error("✗ Error retrieving audit logs for academic year: {}", academicYear, e);
-            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(
-                false,
-                "Failed to retrieve audit logs: " + e.getMessage(),
-                null
-            ));
-        }
+        List<SyllabusAuditLog> auditLogs = auditLogService.getAuditLogsByAcademicYear(academicYear);
+        List<AuditLogResponse> response = auditLogs.stream()
+                .map(AuditLogResponse::fromEntity)
+                .collect(Collectors.toList());
+        
+        log.info("✓ Retrieved {} audit logs for academic year: {}", response.size(), academicYear);
+        
+        return ResponseEntity.ok(new ResponseWrapper<>(
+            true,
+            String.format("Found %d audit logs for academic year: %s", response.size(), academicYear),
+            response
+        ));
     }
+    
 }
