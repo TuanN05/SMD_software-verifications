@@ -295,30 +295,20 @@ public class AuditLogController {
     })
     public ResponseEntity<ResponseWrapper<List<AuditLogResponse>>> getRecentAuditLogs(
             @Parameter(description = "Number of days to look back (default: 7)") 
-            @RequestParam(defaultValue = "7") int days
+            @Positive @RequestParam(defaultValue = "7") int days
     ) {
-        try {
-            List<SyllabusAuditLog> auditLogs = auditLogService.getRecentAuditLogs(days);
-            List<AuditLogResponse> response = auditLogs.stream()
-                    .map(AuditLogResponse::fromEntity)
-                    .collect(Collectors.toList());
-            
-            log.info("✓ Retrieved {} audit logs from the last {} days", response.size(), days);
-            
-            return ResponseEntity.ok(new ResponseWrapper<>(
-                true,
-                String.format("Found %d audit logs from the last %d days", response.size(), days),
-                response
-            ));
-            
-        } catch (Exception e) {
-            log.error("✗ Error retrieving recent audit logs", e);
-            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(
-                false,
-                "Failed to retrieve audit logs: " + e.getMessage(),
-                null
-            ));
-        }
+        List<SyllabusAuditLog> auditLogs = auditLogService.getRecentAuditLogs(days);
+        List<AuditLogResponse> response = auditLogs.stream()
+                .map(AuditLogResponse::fromEntity)
+                .collect(Collectors.toList());
+        
+        log.info("✓ Retrieved {} audit logs from the last {} days", response.size(), days);
+        
+        return ResponseEntity.ok(new ResponseWrapper<>(
+            true,
+            String.format("Found %d audit logs from the last %d days", response.size(), days),
+            response
+        ));
     }
     
     /**

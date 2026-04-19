@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -708,7 +709,7 @@ public class SyllabusController {
     })
     public ResponseEntity<List<AuditLogResponse>> getRecentAuditLogs(
             @Parameter(description = "Number of days to look back (default: 7)")
-            @RequestParam(defaultValue = "7") int days) {
+            @Positive @RequestParam(defaultValue = "7") int days) {
         
         List<SyllabusAuditLog> logs = auditLogService.getRecentAuditLogs(days);
         List<AuditLogResponse> response = logs.stream()
